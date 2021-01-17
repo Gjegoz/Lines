@@ -27,13 +27,24 @@ class Color(enum.Enum):
 
 
 PALETTE = [Color.BLACK, Color.BLUE, Color.GREEN, Color.PURPLE, Color.BROWN, Color.DEEP_PINK, Color.OLIVE]
+
+
 # PALETTE = [Color.BLACK, Color.GREEN]
 
 
-# Невозможно выполнить ход:
-class LinesGameImpossibleMove(Exception):
-    def __init__(self):
-        super().__init__()
+# Некорректные параметры хода:
+class InvalidParams(Exception):
+    pass
+
+
+# Игра закончена:
+class GameOver(Exception):
+    pass
+
+
+# Невозможно передвинуть шарик (отсутствует путь):
+class NoPath(Exception):
+    pass
 
 
 class LinesGame:
@@ -75,19 +86,26 @@ class LinesGame:
     # сделать очередной ход в игре:
     def make_move(self, from_cell_id, to_cell_id):
         # сначала проверяем правильно ли заданы параметры для выполнения хода:
+        if self.is_over:
+            raise GameOver('Игра закончена')
         if not self.is_cell_in_field(from_cell_id) or (
                 not self.is_cell_in_field(to_cell_id)):
-            return None
+            raise InvalidParams('Некорректно указаны номера ячеек')
         if from_cell_id == to_cell_id:
-            return None
-        if self.cells[from_cell_id].is_free() or (
-                not self.cells[to_cell_id].is_free()):
-            return None
+            raise InvalidParams('Совпадают исходная и целевая ячейки')
+        if self.cells[from_cell_id].is_free():
+            raise InvalidParams('Нет шарика в исходной ячейке')
+        if not self.cells[to_cell_id].is_free():
+            raise InvalidParams('Целевая ячейка занята')
+
+        # пробуем переместить шарик на новую позицию игрового поля:
+        try:
+            path = self.relocate_ball(from_cell_id, to_cell_id)
+        except NoPath as e:
+            raise NoPath('Нет пути для перемещения шарика')
 
         current_move = Move()
 
-        # пробуем переместить шарик на новую позицию игрового поля:
-        path = self.relocate_ball(from_cell_id, to_cell_id)
         current_move.set_ball(self.cells[to_cell_id].get_ball())
         current_move.set_path(path)
 
@@ -126,6 +144,11 @@ class LinesGame:
         # запоминаем выполненный ход
         self.moves.append(current_move)
 
+        # проверяем не закончена ли игра (все яячейки пустые)
+        # и если закончена, выставляем соответствующий признак
+        if not self.get_free_cells():
+            self.is_over = True
+
         return self.get_last_move()
 
     # сгенерить и распределить новые шарики по игровому полю
@@ -142,13 +165,13 @@ class LinesGame:
 
     # переместить шарик из одной ячейки в другую:
     def relocate_ball(self, from_cell_id, to_cell_id):
-        path = []
         try:
             for n_c_id in self.get_free_neighbors(from_cell_id):
                 self.paths.add_edge(from_cell_id, n_c_id, weight=1)
             path = (nx.shortest_path(self.paths, from_cell_id, to_cell_id, weight='weight'))
         except nx.exception.NetworkXNoPath as e:  # если пути нет, надо восстановить граф
             self.paths.remove_node(from_cell_id)
+            raise NoPath('Нет пути для перемещания шарика')
         ball = self.cells[from_cell_id].get_ball()
         self.free_cell(from_cell_id)
         self.fill_cell(to_cell_id, ball)
@@ -256,6 +279,10 @@ class LinesGame:
     def get_cells(self):
         return list(itt.product(range(0, self.field_size), range(0, self.field_size)))
 
+    # получить признак окончания игры:
+    def get_is_over(self):
+        return self.is_over
+
     # найти все свободные ячейки на игровом поле:
     def get_free_cells(self):
         free_cells = []
@@ -296,10 +323,9 @@ class LinesGame:
 
     # получить последний выполненный ход:
     def get_last_move(self):
-        if self.moves != []:
-            return self.moves[-1].copy()
-        else:
+        if not self.moves:
             return None
+        return self.moves[-1].copy()
 
     def __str__(self):
         # строковое представление игры для печати
@@ -350,16 +376,14 @@ class Move:
         return self.path.copy()
 
     def get_path_from(self):
-        if self.path != []:
-            return self.path[0]
-        else:
+        if not self.path:
             return None
+        return self.path[0]
 
     def get_path_to(self):
-        if self.path != []:
-            return self.path[-1]
-        else:
+        if not self.path:
             return None
+        return self.path[-1]
 
     def set_freed_cells(self, cell_ids):
         self.freed_cells.clear()
@@ -457,4 +481,3 @@ class Ball:
 if __name__ == '__main__':
     g = LinesGame()  # новая игра
     print(g)
-
