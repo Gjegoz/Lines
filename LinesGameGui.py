@@ -56,6 +56,8 @@ class Board:
             return x, y
 
     def on_click(self, cell_coords):
+        if cell_coords is None:
+            return None
         x, y = cell_coords[0], cell_coords[1]
         self.delete_ball(x, y)
         return x, y
@@ -97,20 +99,27 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                x, y = board.get_click(event.pos)
-                move_coordinates.append((x, y))
+                coords = board.get_click(event.pos)
+                if coords is None:
+                    continue
+                x, y = coords[0], coords[1]
+                if len(move_coordinates) == 0:
+                    if game.get_ball((x, y)) is not None:
+                        move_coordinates.append((x, y))
+                elif len(move_coordinates) == 1:
+                    if game.get_ball((x, y)) is None:
+                        move_coordinates.append((x, y))
 
                 if len(move_coordinates) == 2:
                     try:
                         game.make_move(move_coordinates[0], move_coordinates[1])
+                        move_coordinates.clear()
                     except g.InvalidParams as e:
                         pass
                     except g.GameOver as e:
                         pass
                     except g.NoPath as e:
-                        pass
-                    finally:
-                        move_coordinates.clear()
+                        move_coordinates.pop(-1)
             elif event.button == 3:
                 game.start_game()
                 move_coordinates.clear()
