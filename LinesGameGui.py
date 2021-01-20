@@ -120,6 +120,12 @@ while running:
                 board.delete_ball(x, y)
 
     board.render()
+    score = str(game.get_score())
+    if game.get_is_over():
+        is_over = ' Игра окончена'
+    else:
+        is_over = ''
+    pygame.display.set_caption('Color Lines. ' + 'Набрано очков: ' + score + '.' + is_over)
     pygame.display.flip()
 
 
