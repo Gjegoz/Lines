@@ -12,11 +12,11 @@ class Color(enum.Enum):
     PURPLE = 4
     BROWN = 5
     DEEP_PINK = 6
-    OLIVE = 7
+    YELLOW = 7
 
     def as_string(self):
         AS_STRING = {0: 'black', 1: 'blue', 2: 'green', 3: 'red', 4: 'purple',
-                     5: 'brown', 6: 'pink', 7: 'olive'}
+                     5: 'brown', 6: 'pink', 7: 'yellow'}
         return AS_STRING[self.value]
 
     def __str__(self):
@@ -26,10 +26,7 @@ class Color(enum.Enum):
         return self.value
 
 
-PALETTE = [Color.BLACK, Color.BLUE, Color.GREEN, Color.PURPLE, Color.BROWN, Color.DEEP_PINK, Color.OLIVE]
-
-
-# PALETTE = [Color.BLACK, Color.GREEN]
+PALETTE = [Color.BLACK, Color.BLUE, Color.GREEN, Color.PURPLE, Color.BROWN, Color.DEEP_PINK, Color.YELLOW]
 
 
 # Некорректные параметры хода:
