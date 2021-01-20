@@ -95,21 +95,26 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = board.get_click(event.pos)
-            move_coordinates.append((x, y))
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                x, y = board.get_click(event.pos)
+                move_coordinates.append((x, y))
 
-            if len(move_coordinates) == 2:
-                try:
-                    game.make_move(move_coordinates[0], move_coordinates[1])
-                except g.InvalidParams as e:
-                    pass
-                except g.GameOver as e:
-                    pass
-                except g.NoPath as e:
-                    pass
-                finally:
-                    move_coordinates.clear()
+                if len(move_coordinates) == 2:
+                    try:
+                        game.make_move(move_coordinates[0], move_coordinates[1])
+                    except g.InvalidParams as e:
+                        pass
+                    except g.GameOver as e:
+                        pass
+                    except g.NoPath as e:
+                        pass
+                    finally:
+                        move_coordinates.clear()
+            elif event.button == 3:
+                game.start_game()
+                move_coordinates.clear()
+
 
     for x in range(0, board.width):
         for y in range(0, board.height):
@@ -122,7 +127,7 @@ while running:
     board.render()
     score = str(game.get_score())
     if game.get_is_over():
-        is_over = ' Игра окончена'
+        is_over = ' Игра окончена.'
     else:
         is_over = ''
     pygame.display.set_caption('Color Lines. ' + 'Набрано очков: ' + score + '.' + is_over)
